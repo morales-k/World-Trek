@@ -7,6 +7,7 @@ import { addHexes, createHexMesh } from "./hex";
 import { createMapEdge, createMapFloor } from "./map";
 import { createWater } from "./water";
 import { setControls } from "./controls";
+import { createPlayer, movePlayer } from "./player";
   
 const scene = new Scene();
 const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
@@ -49,6 +50,7 @@ const loop = async () => {
     leaves: await new TextureLoader().loadAsync("assets/leaves.jpg"),
     stone: await new TextureLoader().loadAsync("assets/stone.png"),
     water: await new TextureLoader().loadAsync("assets/water.png"),
+    player: await new TextureLoader().loadAsync("assets/player.jpg"),
   };
 
   let textureGeos = {
@@ -56,7 +58,8 @@ const loop = async () => {
     grass: new BoxGeometry(0, 0, 0),
     bark: new BoxGeometry(0, 0, 0),
     leaves: new BoxGeometry(0, 0, 0),
-    stone: new BoxGeometry(0, 0, 0)
+    stone: new BoxGeometry(0, 0, 0),
+    player: new BoxGeometry(0, 0, 0),
   };
 
   addHexes(maxHeight, textureGeos);
@@ -71,9 +74,10 @@ const loop = async () => {
   const mapEdge = createMapEdge(envmap, textures.dirt, maxHeight);
   const mapFloor = createMapFloor(envmap, textures.dirt, maxHeight);
   const water = createWater(envmap, textures.water, maxHeight);
+  const player = createPlayer(envmap, textures.player, [5, 5]);
 
   scene.add(ambientLight, mapEdge, mapFloor, water, dirtMesh, grassMesh, barkMesh, 
-    leavesMesh, stoneMesh);
+    leavesMesh, stoneMesh, player);
 
   renderer.setAnimationLoop(() => {
     controls.update();
@@ -85,4 +89,11 @@ loop();
 // Set event listener for resizing window.
 window.addEventListener("resize", async () => {
   handleResize();
+});
+
+window.addEventListener("keydown", async (e) => {
+  const directions = ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"];
+  if (directions.includes(e.key)) {
+    movePlayer(e.key);
+  }
 });
