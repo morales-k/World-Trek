@@ -1,14 +1,14 @@
 import { Scene, PerspectiveCamera, WebGLRenderer, Color, 
   ACESFilmicToneMapping, sRGBEncoding, PMREMGenerator, 
-  FloatType, PCFShadowMap } from "three";
+  FloatType, PCFShadowMap, Raycaster, Vector2 } from "three";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 import { createAmbientLight } from "./light";
-import { addHexes, createHexMesh } from "./hex";
+import { addHexes } from "./hex";
 import { createMapEdge, createMapFloor } from "./map";
 import { createWater } from "./water";
 import { setControls } from "./controls";
 import { createPlayer, movePlayer } from "./player";
-import { textures, textureGeos } from "./textures";
+import { textures } from "./textures";
   
 let playerCoords = [5, 5];
 const scene = new Scene();
@@ -16,6 +16,11 @@ const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight,
 const renderer = new WebGLRenderer({ antialias: true });
 const controls = setControls(camera, renderer);
 const player = createPlayer(textures.player, playerCoords);
+// Raycasting
+let prevClickedTile;
+let pointer = new Vector2();
+const raycaster = new Raycaster();
+renderer.domElement.addEventListener("click", raycast, false);
 
 scene.background = new Color("#71A9B6");
 camera.position.set(20, 50, 0);
@@ -46,21 +51,14 @@ const loop = async (playerCoords, textures) => {
   let envmap = pmrem.fromEquirectangular(envmapTexture).texture;
   const maxHeight = 3;
 
-  addHexes(maxHeight, textureGeos);
-
-  const dirtMesh = createHexMesh(envmap, textureGeos.dirt, textures.dirt);
-  const grassMesh = createHexMesh(envmap, textureGeos.grass, textures.grass);
-  const barkMesh = createHexMesh(envmap, textureGeos.bark, textures.bark);
-  const leavesMesh = createHexMesh(envmap, textureGeos.leaves, textures.leaves);
-  const stoneMesh = createHexMesh(envmap, textureGeos.stone, textures.stone);
+  addHexes(maxHeight, envmap, textures, scene);
   
   const ambientLight = createAmbientLight();
   const mapEdge = createMapEdge(envmap, textures.cobblestone, maxHeight);
   const mapFloor = createMapFloor(envmap, textures.cobblestone, maxHeight);
   const water = createWater(envmap, textures.water, maxHeight);
 
-  scene.add(ambientLight, mapEdge, mapFloor, water, dirtMesh, grassMesh, barkMesh, 
-    leavesMesh, stoneMesh, player);
+  scene.add(ambientLight, mapEdge, mapFloor, water, player);
 
   renderer.setAnimationLoop(() => {
     controls.update();
@@ -87,3 +85,45 @@ window.addEventListener("keydown", async (e) => {
     scene.add(createPlayer(textures.player, updatedPlayerCoords));
   }
 });
+
+// Update the pointer values on mouse move to prevent delay when adding tile glow.
+window.addEventListener("mousemove", async (e) => {
+  pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = - (e.clientY / window.innerHeight) * 2 + 1;
+});
+
+/**
+ * Determines if a tile was intersected(clicked) based on pointer & camera position.
+ */
+function raycast () {
+  raycaster.setFromCamera(pointer, camera);
+  let intersects = raycaster.intersectObjects(scene.children.filter(child => child.name === "tile"));
+  let clickedTile = intersects[0].object;
+
+  if (prevClickedTile) {
+    removeTileGlow();
+  }
+
+  if (clickedTile) {
+    addTileGlow(clickedTile);
+  }
+}
+
+/**
+ * Sets emissive property for a clicked tile.
+ * 
+ * @param {Object} clickedTile - The intersected mesh that was clicked.
+ */
+const addTileGlow = (clickedTile) => {
+  clickedTile.material.emissive.setHex(clickedTile.currentHex);
+  clickedTile.currentHex = clickedTile.material.emissive.getHex();
+  clickedTile.material.emissive.setHex(0x0067ff);
+  prevClickedTile = clickedTile;
+};
+
+/**
+ * Sets previously clicked tiles emissive property to null.
+ */
+const removeTileGlow = async () => {
+  prevClickedTile.material.emissive.setHex(null);
+};
