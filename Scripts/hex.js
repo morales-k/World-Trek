@@ -1,5 +1,12 @@
 import { CylinderGeometry, Mesh, MeshPhysicalMaterial, Vector2 } from "three";
 
+/**
+ * Creates & returns a hexagon using CylinderGeometry.
+ * 
+ * @param {Number} height - Indicates the height of the geometry.
+ * @param {Object} position - X,Y coords used for tile positioning.
+ * @returns 
+ */
 export const createHexGeometry = (height, position) => {
   let hexGeo = new CylinderGeometry(1, 1, height, 6, 1, false);
   hexGeo.translate(position.x, height * 0.5, position.y);
@@ -7,6 +14,14 @@ export const createHexGeometry = (height, position) => {
   return hexGeo;
 };
 
+/**
+ * Creates & returns a mesh by attaching a texture to a geometry.
+ * 
+ * @param {Object} envmap - The enviornment map.
+ * @param {Object} hexGeo - The geometry object to append the material to.
+ * @param {Object} texture - Image texture used for the material.
+ * @returns 
+ */
 export const createHexMesh = (envmap, hexGeo, texture) => {
     let mat = new MeshPhysicalMaterial({
     envMap: envmap,
@@ -23,6 +38,14 @@ export const createHexMesh = (envmap, hexGeo, texture) => {
   return mesh;
 };
 
+/**
+ * Creates a map of possible hexagon positions, and calls addHexTexture for each kept position.
+ * 
+ * @param {Number} maxHeight - The maximum height a hex can have.
+ * @param {Object} envmap - The enviornment map.
+ * @param {Object} textures - A object containing a list of textures used for materials.
+ * @param {Object} scene - The scene itself that hexes will be added to.
+ */
 export const addHexes = (maxHeight, envmap, textures, scene) => {
   // Start i & j from negative values for full circular map.
   for (let i = -10; i < 12; i++) {
@@ -39,11 +62,27 @@ export const addHexes = (maxHeight, envmap, textures, scene) => {
   }
 };
 
+/**
+ * Creates Vector2 for each tile, offseting any tiles where tileY % 2 returns an odd number.
+ * 
+ * @param {Number} tileX - X coordinate of a tile.
+ * @param {Number} tileY - Y coordinate of a tile.
+ * @returns 
+ */
 function tileToPosition(tileX, tileY) {
-  // If tileY % 2 returns an odd number, hexagon becomes offset.
   return new Vector2((tileX + (tileY % 2) * 0.5) * 1.75, tileY * 1.50);
 };
 
+/**
+ * Creates a hexagon geometry, attachs a mesh, and adds it to the scene.
+ * 
+ * @param {Number} height - The height assigned to the hexagon.
+ * @param {Object} position - An object containing XY coords of the hexagon.
+ * @param {Number} maxHeight - Maximum height a hexagon can have.
+ * @param {Object} envmap - The enviornment map used for the material.
+ * @param {Object} textures - An object containing a list of image textures.
+ * @param {Object} scene - The scene itself that hexagons are added to.
+ */
 function addHexTexture(height, position, maxHeight, envmap, textures, scene) {
   let hexGeo = createHexGeometry(1, position);
   let hex;
