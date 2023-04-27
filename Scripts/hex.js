@@ -1,5 +1,4 @@
 import { CylinderGeometry, Mesh, MeshPhysicalMaterial, Vector2 } from "three";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils";
 
 export const createHexGeometry = (height, position) => {
   let hexGeo = new CylinderGeometry(1, 1, height, 6, 1, false);
@@ -19,11 +18,12 @@ export const createHexMesh = (envmap, hexGeo, texture) => {
   let mesh = new Mesh(hexGeo, mat);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
+  mesh.name = "tile";
 
   return mesh;
 };
 
-export const addHexes = (maxHeight, textureGeos) => {
+export const addHexes = (maxHeight, envmap, textures, scene) => {
   // Start i & j from negative values for full circular map.
   for (let i = -10; i < 12; i++) {
     for (let j = -10; j < 12; j++) {
@@ -34,7 +34,7 @@ export const addHexes = (maxHeight, textureGeos) => {
         continue;
       }
 
-      addHexTexture(Math.random() * maxHeight, position, maxHeight, textureGeos);
+      addHexTexture(Math.random() * maxHeight, position, maxHeight, envmap, textures, scene);
     }
   }
 };
@@ -44,18 +44,21 @@ function tileToPosition(tileX, tileY) {
   return new Vector2((tileX + (tileY % 2) * 0.5) * 1.75, tileY * 1.50);
 };
 
-function addHexTexture(height, position, maxHeight, textureGeos) {
+function addHexTexture(height, position, maxHeight, envmap, textures, scene) {
   let hexGeo = createHexGeometry(1, position);
+  let hex;
   
   const stoneHeight = maxHeight * 0.8;
   const grassHeight = maxHeight * 0.3;
   const dirtHeight = maxHeight * 0;
 
   if (height > stoneHeight) {
-    textureGeos.stone = mergeGeometries([hexGeo, textureGeos.stone]);
+    hex = createHexMesh(envmap, hexGeo, textures.stone);
   } else if (height > grassHeight) {
-      textureGeos.grass = mergeGeometries([hexGeo, textureGeos.grass]);
+    hex = createHexMesh(envmap, hexGeo, textures.grass);
   } else if (height > dirtHeight) {
-      textureGeos.dirt = mergeGeometries([hexGeo, textureGeos.dirt]);
+    hex = createHexMesh(envmap, hexGeo, textures.dirt);
   }
+
+  scene.add(hex);
 };
