@@ -1,4 +1,7 @@
 import { SphereGeometry, MeshLambertMaterial, Mesh } from "three";
+import { textures } from "./textures";
+
+export let playerCoords = [0, 0];
 
 export const createPlayer = (texture, position) => {
   const geo = new SphereGeometry(1, 16, 16);
@@ -15,29 +18,18 @@ export const createPlayer = (texture, position) => {
   return mesh;
 };
 
-export const movePlayer = (key, playerCoords) => {
-  let updatedPlayerCoords = [...playerCoords];
+export const movePlayer = (selectedTile) => {
+  const updatedCoords = [selectedTile.position.x, selectedTile.position.y];
+  playerCoords = updatedCoords;
+  return createPlayer(textures.player, updatedCoords);
+};
 
-  switch (key) {
-    case "ArrowUp": {
-      updatedPlayerCoords[0] -= 1;
-      break;
-    }
-    case "ArrowDown": {
-      updatedPlayerCoords[0] += 1;
-      break;
-    }
-    case "ArrowLeft": {
-      updatedPlayerCoords[1] += 1;
-      break;
-    }
-    case "ArrowRight": {
-      updatedPlayerCoords[1] -= 1;
-      break;
-    }
-    default:
-      break;
-  }
-
-  return updatedPlayerCoords;
+export const removePlayer = (scene, player) => {
+  // Remove mesh from scene
+  scene.remove(player);
+  // Remove mesh material & texture
+  player.material.dispose();
+  player.material.map.dispose();
+  // Remove mesh geometry
+  player.geometry.dispose();
 };
