@@ -7,7 +7,7 @@ import { addHexes, tiles } from "./hex";
 import { createMapEdge, createMapFloor } from "./map";
 import { createWater } from "./water";
 import { setControls } from "./controls";
-import { createPlayer, movePlayer, removePlayer } from "./player";
+import { createPlayer, movePlayer, removePlayer, isTileAdjacent } from "./player";
 import { textures } from "./textures";
 
 const scene = new Scene();
@@ -91,7 +91,11 @@ function raycast () {
 
   if (clickedTile) {
     const selectedTile = tiles.filter(tile => tile.tileID === clickedTile.id)[0];
-    
+    const adjacentTile = isTileAdjacent(selectedTile);
+
+    if (!adjacentTile) {
+      return;
+    }
     // Remove the player from the scene before updating position.
     removePlayer(scene, player);
     player = movePlayer(selectedTile);
