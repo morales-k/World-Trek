@@ -33,3 +33,12 @@ export const removePlayer = (scene, player) => {
   // Remove mesh geometry
   player.geometry.dispose();
 };
+
+// Determines if a tile is adjacent to the player's current position. 
+// No adjacent tiles should have a greater difference than 1.75 in their position values.
+export const isTileAdjacent = (tile) => {
+  const diffX = Math.abs(tile.position.x - playerCoords[0]);
+  const diffY = Math.abs(tile.position.y - playerCoords[1]);
+
+  return diffX <= 1.75 && diffY <= 1.75;
+}
