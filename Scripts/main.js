@@ -3,19 +3,18 @@ import { Scene, PerspectiveCamera, WebGLRenderer, Color,
   FloatType, PCFShadowMap, Raycaster, Vector2 } from "three";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 import { createAmbientLight } from "./light";
-import { addHexes } from "./hex";
+import { addHexes, tiles } from "./hex";
 import { createMapEdge, createMapFloor } from "./map";
 import { createWater } from "./water";
 import { setControls } from "./controls";
-import { createPlayer, movePlayer } from "./player";
+import { createPlayer, movePlayer, removePlayer } from "./player";
 import { textures } from "./textures";
-  
-let playerCoords = [5, 5];
+
 const scene = new Scene();
 const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
 const renderer = new WebGLRenderer({ antialias: true });
 const controls = setControls(camera, renderer);
-const player = createPlayer(textures.player, playerCoords);
+let player = createPlayer(textures.player, [0, 0]);
 // Raycasting
 let prevClickedTile;
 let pointer = new Vector2();
@@ -44,7 +43,7 @@ const handleResize = () => {
   camera.position.set(20, 50, 0);
 };
 
-const loop = async (playerCoords, textures) => {
+const loop = async (textures) => {
   // Process enviornment map
   let pmrem = new PMREMGenerator(renderer);
   let envmapTexture = await new RGBELoader().setDataType(FloatType).loadAsync("assets/envmap.hdr");
@@ -65,25 +64,11 @@ const loop = async (playerCoords, textures) => {
     renderer.render(scene, camera);
   });
 }
-loop(playerCoords, textures);
+loop(textures);
 
 // Set event listener for resizing window.
 window.addEventListener("resize", async () => {
   handleResize();
-});
-
-window.addEventListener("keydown", async (e) => {
-  const directions = ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"];
-
-  if (directions.includes(e.key)) {
-    // Clear the player object.
-    const player = scene.getObjectByName("player");
-    scene.remove(player);
-    // Update player coordinates based on key & re-add to scene.
-    let updatedPlayerCoords = movePlayer(e.key, playerCoords);
-    playerCoords = updatedPlayerCoords;
-    scene.add(createPlayer(textures.player, updatedPlayerCoords));
-  }
 });
 
 // Update the pointer values on mouse move to prevent delay when adding tile glow.
@@ -98,14 +83,21 @@ window.addEventListener("mousemove", async (e) => {
 function raycast () {
   raycaster.setFromCamera(pointer, camera);
   let intersects = raycaster.intersectObjects(scene.children.filter(child => child.name === "tile"));
-  let clickedTile = intersects[0].object;
+  let clickedTile = intersects[0] ? intersects[0].object : null;
 
   if (prevClickedTile) {
     removeTileGlow();
   }
 
   if (clickedTile) {
+    const selectedTile = tiles.filter(tile => tile.tileID === clickedTile.id)[0];
+    
+    // Remove the player from the scene before updating position.
+    removePlayer(scene, player);
+    player = movePlayer(selectedTile);
+
     addTileGlow(clickedTile);
+    scene.add(player);
   }
 }
 
