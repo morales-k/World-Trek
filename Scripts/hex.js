@@ -1,5 +1,7 @@
 import { CylinderGeometry, Mesh, MeshPhysicalMaterial, Vector2 } from "three";
 
+export let tiles = [];
+
 /**
  * Creates & returns a hexagon using CylinderGeometry.
  * 
@@ -100,4 +102,21 @@ function addHexTexture(height, position, maxHeight, envmap, textures, scene) {
   }
 
   scene.add(hex);
+  trackTile(hex, position);
 };
+
+/**
+ * Creates currentTile object from hex and position. Then adds to tiles array.
+ * 
+ * @param {Object} hex - The tile object.
+ * @param {Object} position - X,Y coords used for tile positioning.
+ */
+function trackTile(hex, position) {
+  const currentTile = {
+    id: tiles.length,
+    tileID: hex.id,
+    position: position
+  };
+  
+  tiles.push(currentTile);
+}
